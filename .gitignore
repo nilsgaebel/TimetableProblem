@@ -1,0 +1,10 @@
+# Default ignored files
+/.idea/workspace.xml
+.idea/
+s++TimetableProblem.iml
+Timetable_Problem_2020.pdf
+TimeTableProblem.xlsx
+.out/
+.data/
+.dataCopy/
+.data
