@@ -4,7 +4,7 @@
 s++TimetableProblem.iml
 Timetable_Problem_2020.pdf
 TimeTableProblem.xlsx
-.out/
-.data/
-.dataCopy/
-.data
+out/
+data/
+dataCopy/
+

@@ -11,4 +11,16 @@ public class Lecture_has_StudentGroup {
         this.idStudentGroup = idStudentGroup;
         this.numParticipants = numParticipants;
     }
+
+    public int getIdLecture() {
+        return idLecture;
+    }
+
+    public int getNumParticipants() {
+        return numParticipants;
+    }
+
+    public String getIdStudentGroup() {
+        return idStudentGroup;
+    }
 }

@@ -11,4 +11,16 @@ public class StudentGroup_Blacklist {
         this.idTimeSlot = idTimeSlot;
         this.idStudentGroup = idStudentGroup;
     }
+
+    public String getIdStudentGroup() {
+        return idStudentGroup;
+    }
+
+    public int getIdTimeSlot() {
+        return idTimeSlot;
+    }
+
+    public int getIdDay() {
+        return idDay;
+    }
 }

@@ -16,8 +16,8 @@ public class Lecture {
         this.idLecturer = idLecturer;
     }
 
-    public void setApplicableTimeslots(){
-
+    public void setApplicableTimeslots(ArrayList<ClassroomAndTime> applicableTimeslots){
+        this.applicableTimeslots = applicableTimeslots;
     }
 
     public int getIdLecturer() {
@@ -30,5 +30,9 @@ public class Lecture {
 
     public int getIdLectureObject() {
         return idLectureObject;
+    }
+
+    public ArrayList<ClassroomAndTime> getApplicableTimeslots() {
+        return applicableTimeslots;
     }
 }

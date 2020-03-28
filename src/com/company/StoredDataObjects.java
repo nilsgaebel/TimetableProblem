@@ -15,6 +15,7 @@ public class StoredDataObjects {
     ArrayList<Lecturer_Blacklist> allLecturer_Blacklists;
     ArrayList<StudentGroup> allStudentGroups;
     ArrayList<StudentGroup_Blacklist> allStudentGroup_Blacklist;
+    ArrayList<ClassroomAndTime> allClassroomAndTime;
 
     public StoredDataObjects() {
         this.allClassrooms = new ArrayList<>();
@@ -83,12 +84,14 @@ public class StoredDataObjects {
                 System.out.println("File: " + fileEntry.getName() + " not valid!");
             }
         }
+        this.allClassroomAndTime = getAvailableClassroomAndTimes();
+        setAvailableClassroomAndTimesForEachLecture();
     }
 
-    public ArrayList<ClassroomAndTime> getAvailableClassroomAndTimes(){
+    public ArrayList<ClassroomAndTime> getAvailableClassroomAndTimes() {
         ArrayList<ClassroomAndTime> availableClassRoomAndTimes = new ArrayList<>();
         List<Classroom_Blacklist> findClassroom_Blacklist;
-        boolean checkIfSlotinBlacklist=false;
+        boolean checkIfSlotinBlacklist = false;
         for (Classroom classroom : this.allClassrooms) {
             findClassroom_Blacklist = this.allClassroom_Blacklists.stream().filter(find -> find.getIdClassroom() == classroom.getIdClassroom()).collect(Collectors.toList());
             for (int i = 1; i <= 5; i++) { //loop for weekdays
@@ -110,6 +113,51 @@ public class StoredDataObjects {
             }
         }
         return availableClassRoomAndTimes;
+    }
+
+    public void setAvailableClassroomAndTimesForEachLecture() {
+
+        ArrayList<ClassroomAndTime> possibleClassroomAndTimesForLecture;
+        List<ClassroomAndTime> selectedClassroomAndTime;
+        int participantsforLecture = 0;
+
+        for (Lecture lectureObject : this.allLectures) {
+            //Blacklist-Tage vom Dozenten für das lectureObject werden aus den möglichen Raumkombinationen gelöscht.
+            possibleClassroomAndTimesForLecture = this.getAvailableClassroomAndTimes();
+            Lecturer lecturerForLectureObject = this.allLecturers.stream().filter(id -> id.getIdLecturer() == lectureObject.getIdLecturer()).findAny().get();
+            List<Lecturer_Blacklist> lecturer_blacklist = allLecturer_Blacklists.stream().filter(id -> id.getIdLecturer() == lecturerForLectureObject.getIdLecturer()).collect(Collectors.toList());
+            if (lecturer_blacklist.size() > 0) {
+                for (Lecturer_Blacklist iterator : lecturer_blacklist) {
+                    selectedClassroomAndTime = possibleClassroomAndTimesForLecture.stream().filter(timeSlot -> timeSlot.getIdTimeSlot() == iterator.getIdTimeSlot() && timeSlot.getIdDay() == iterator.getIdDay()).collect(Collectors.toList());
+                    for (ClassroomAndTime iteratorForDelete : selectedClassroomAndTime) {
+                        possibleClassroomAndTimesForLecture.remove(iteratorForDelete);
+                    }
+                }
+            }
+            //Blacklist-Zeiten der Studentgroups für lectureObject löschen
+            List<Lecture_has_StudentGroup> lecture_has_studentGroups = this.allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == lectureObject.getIdLecture()).collect(Collectors.toList());
+            participantsforLecture = 0;
+            for (Lecture_has_StudentGroup lecture_has_studentGroup : lecture_has_studentGroups) {
+                participantsforLecture += lecture_has_studentGroup.getNumParticipants(); //Summe der Teilnehmer, um nachfolgend zu kleine Räume rauszufiltern
+                List<StudentGroup_Blacklist> blacklistForStudentGroup = allStudentGroup_Blacklist.stream().filter(idStudentGroup -> idStudentGroup.getIdStudentGroup().equals(lecture_has_studentGroup.getIdStudentGroup())).collect(Collectors.toList());
+                for (StudentGroup_Blacklist iterator : blacklistForStudentGroup) {
+                    selectedClassroomAndTime = possibleClassroomAndTimesForLecture.stream().filter(timeSlot -> timeSlot.getIdTimeSlot() == iterator.getIdTimeSlot() && timeSlot.getIdDay() == iterator.getIdDay()).collect(Collectors.toList());
+                    for (ClassroomAndTime iteratorForDelete : selectedClassroomAndTime) {
+                        possibleClassroomAndTimesForLecture.remove(iteratorForDelete);
+                    }
+                }
+            }
+            //Räume löschen, die für Studentengruppen von lectureObject zu klein sind
+            for (Classroom classroom : allClassrooms) {
+                if (classroom.getCapacity() < participantsforLecture) {
+                    selectedClassroomAndTime = possibleClassroomAndTimesForLecture.stream().filter((roomId -> roomId.getIdClassroom() == classroom.getIdClassroom())).collect(Collectors.toList());
+                    for (ClassroomAndTime iteratorForDelete : selectedClassroomAndTime) {
+                        possibleClassroomAndTimesForLecture.remove(iteratorForDelete);
+                    }
+                }
+            }
+            lectureObject.setApplicableTimeslots(possibleClassroomAndTimesForLecture);
+        }
     }
 
     private static boolean isValidFile(String fileName) {

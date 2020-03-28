@@ -18,29 +18,9 @@ public class Main {
         storedDataObjects.readDataObjects(args[0]);
 
         ArrayList<Lecture> allLectures = storedDataObjects.allLectures;
-        ArrayList<Lecturer> allLecturer = storedDataObjects.allLecturers;
-        ArrayList<Lecturer_Blacklist> allLecturer_Blacklists = storedDataObjects.allLecturer_Blacklists;
-        ArrayList<ClassroomAndTime> allClassroomAndTimes = storedDataObjects.getAvailableClassroomAndTimes();
-        ArrayList<ClassroomAndTime> possibleClassroomAndTimesForLecture = storedDataObjects.getAvailableClassroomAndTimes();
-        List<ClassroomAndTime> selectedClassroomAndTime;
 
-        for (Lecture lecture:allLectures) {
-            if(lecture.getIdLecture() == 9){
-                System.out.println();
-            }
-            Lecturer lecturerForLecture = allLecturer.stream().filter(id -> id.getIdLecturer() == lecture.getIdLecturer()).findAny().get();
-            List<Lecturer_Blacklist> lecturer_blacklist = allLecturer_Blacklists.stream().filter(id -> id.getIdLecturer() == lecturerForLecture.getIdLecturer()).collect(Collectors.toList());
-            if(lecturer_blacklist.size()>0){
-                for (Lecturer_Blacklist iterator: lecturer_blacklist) {
-                    selectedClassroomAndTime = allClassroomAndTimes.stream().filter(timeSlot -> timeSlot.getIdTimeSlot() == iterator.getIdTimeSlot() && timeSlot.getIdDay() == iterator.getIdDay()).collect(Collectors.toList());
 
-                    for (ClassroomAndTime iteratorForDelete:selectedClassroomAndTime) {
-                        possibleClassroomAndTimesForLecture.remove(iteratorForDelete);
-                    }
-                }
-            }
 
-        }
 
     }
 }
