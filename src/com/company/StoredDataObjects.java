@@ -91,7 +91,7 @@ public class StoredDataObjects {
         boolean checkIfSlotinBlacklist=false;
         for (Classroom classroom : this.allClassrooms) {
             findClassroom_Blacklist = this.allClassroom_Blacklists.stream().filter(find -> find.getIdClassroom() == classroom.getIdClassroom()).collect(Collectors.toList());
-            for (int i = 1; i <= 5; i++) { //loop for weekday4
+            for (int i = 1; i <= 5; i++) { //loop for weekdays
                 for (int j = 1; j <= 6; j++) { //each weekday has 6 TimeSlots
                     if (findClassroom_Blacklist.size() == 0) {
                         availableClassRoomAndTimes.add(new ClassroomAndTime(classroom.getIdClassroom(), classroom.getCapacity(), i, j));
