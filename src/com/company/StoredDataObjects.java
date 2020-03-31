@@ -9,7 +9,7 @@ public class StoredDataObjects {
 
     ArrayList<Classroom> allClassrooms;
     ArrayList<Classroom_Blacklist> allClassroom_Blacklists;
-    ArrayList<Lecture> allLectures;
+    ArrayList<Lecture> allLecturesToSchedule;
     ArrayList<Lecture_has_StudentGroup> allLecture_has_StudentGroups;
     ArrayList<Lecturer> allLecturers;
     ArrayList<Lecturer_Blacklist> allLecturer_Blacklists;
@@ -20,7 +20,7 @@ public class StoredDataObjects {
     public StoredDataObjects() {
         this.allClassrooms = new ArrayList<>();
         this.allClassroom_Blacklists = new ArrayList<>();
-        this.allLectures = new ArrayList<>();
+        this.allLecturesToSchedule = new ArrayList<>();
         this.allLecture_has_StudentGroups = new ArrayList<>();
         this.allLecturers = new ArrayList<>();
         this.allLecturer_Blacklists = new ArrayList<>();
@@ -50,7 +50,7 @@ public class StoredDataObjects {
                                 break;
                             case "Lecture.txt":
                                 Lecture currentLecture = new Lecture(Integer.parseInt(lineSplit[0]), Integer.parseInt(lineSplit[1]), Integer.parseInt(lineSplit[2]));
-                                this.allLectures.add(currentLecture);
+                                this.allLecturesToSchedule.add(currentLecture);
                                 break;
                             case "Lecture_has_StudentGroup.txt":
                                 Lecture_has_StudentGroup currentLecture_has_StudentGroup = new Lecture_has_StudentGroup(Integer.parseInt(lineSplit[0]), lineSplit[1], Integer.parseInt(lineSplit[2]));
@@ -85,10 +85,10 @@ public class StoredDataObjects {
             }
         }
         this.allClassroomAndTime = getAvailableClassroomAndTimes();
-        setAvailableClassroomAndTimesForEachLecture();
+        initializeAvailableClassroomAndTimesForEachLecture();
     }
 
-    public ArrayList<ClassroomAndTime> getAvailableClassroomAndTimes() {
+    private ArrayList<ClassroomAndTime> getAvailableClassroomAndTimes() {
         ArrayList<ClassroomAndTime> availableClassRoomAndTimes = new ArrayList<>();
         List<Classroom_Blacklist> findClassroom_Blacklist;
         boolean checkIfSlotinBlacklist = false;
@@ -115,13 +115,13 @@ public class StoredDataObjects {
         return availableClassRoomAndTimes;
     }
 
-    public void setAvailableClassroomAndTimesForEachLecture() {
+    private void initializeAvailableClassroomAndTimesForEachLecture() {
 
         ArrayList<ClassroomAndTime> possibleClassroomAndTimesForLecture;
         List<ClassroomAndTime> selectedClassroomAndTime;
         int participantsforLecture = 0;
 
-        for (Lecture lectureObject : this.allLectures) {
+        for (Lecture lectureObject : this.allLecturesToSchedule) {
             //Blacklist-Tage vom Dozenten für das lectureObject werden aus den möglichen Raumkombinationen gelöscht.
             possibleClassroomAndTimesForLecture = this.getAvailableClassroomAndTimes();
             Lecturer lecturerForLectureObject = this.allLecturers.stream().filter(id -> id.getIdLecturer() == lectureObject.getIdLecturer()).findAny().get();
@@ -157,6 +157,32 @@ public class StoredDataObjects {
                 }
             }
             lectureObject.setApplicableTimeslots(possibleClassroomAndTimesForLecture);
+        }
+    }
+
+    public void updateAvailableClassroomAndTimesForEachLecture(Lecture scheduledLec, ClassroomAndTime scheduledClassroomAndTime){
+
+        //Der Lehrer, der für scheduledClassroomAndTime verplant wurde, darf für den Timeslot nicht nochmal verplant werden. Gleiches gilt für die Studentengruppen
+        List<Lecture_has_StudentGroup> scheduledLecture_has_studentGroups = allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == scheduledLec.getIdLecture()).collect(Collectors.toList());
+        List<Lecture_has_StudentGroup> studentGroupsForLec;
+        for (Lecture lec:this.allLecturesToSchedule) {
+            //wenn ein anderes Fach den nun vergebenen Zeitslot in den möglichen Zeitslots hat, so wird dieser gelöscht (Da er schon vergeben ist).
+            if(lec.getApplicableTimeslots().contains(scheduledClassroomAndTime)){
+                lec.getApplicableTimeslots().remove(scheduledClassroomAndTime);
+            }
+            //Es werden sich alle Studentengruppen geholt, die das iterierende Fach lec hören. Gleicht einer Studentengruppe aus dem Fach lec einer Studentengruppe aus dem verplanten Fach, so werden die Zeitblöcke, die sich dem verplanten ClassroomAndTime leichen gelöscht. Hierdurch können die selben Studentengruppen nicht doppelt gebucht werden.
+            studentGroupsForLec =  allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == lec.getIdLecture()).collect(Collectors.toList());
+            for (Lecture_has_StudentGroup iterate1:studentGroupsForLec) {
+                for (Lecture_has_StudentGroup iterate2:scheduledLecture_has_studentGroups) {
+                    if(iterate1.getIdStudentGroup().equals(iterate2.getIdStudentGroup())){
+                        lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledClassroomAndTime.getIdDay() && classroomAndTime.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()));
+                    }
+                }
+            }
+            //Unterrichtet der Dozent aus dem scheduledLec auch andere Fächer, so wird er dort aus den Timeslots entfernt, der schon für scheduledLec gesetzt wurde.
+            if(lec.getIdLecturer() == scheduledLec.getIdLecturer()){
+               lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledClassroomAndTime.getIdDay() && classroomAndTime.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()));
+            }
         }
     }
 

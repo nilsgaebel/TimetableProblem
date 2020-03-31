@@ -25,4 +25,17 @@ public class ClassroomAndTime {
     public int getIdTimeSlot() {
         return idTimeSlot;
     }
+
+    public int getCapacity() {
+        return capacity;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if(o instanceof ClassroomAndTime){
+            ClassroomAndTime p = (ClassroomAndTime) o;
+            return (this.getIdTimeSlot() == p.getIdTimeSlot() && this.getIdDay() == p.getIdDay() && this.getIdClassroom() == p.getIdClassroom());
+        } else
+            return false;
+    }
 }

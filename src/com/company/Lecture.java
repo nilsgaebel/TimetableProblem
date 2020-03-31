@@ -9,6 +9,7 @@ public class Lecture {
     private int idLecturer;
 
     private ArrayList<ClassroomAndTime> applicableTimeslots;
+    private ClassroomAndTime scheduledClassroomAndTime;
 
     public Lecture(int idLectureObject, int idLecture, int idLecturer) {
         this.idLectureObject = idLectureObject;
@@ -34,5 +35,13 @@ public class Lecture {
 
     public ArrayList<ClassroomAndTime> getApplicableTimeslots() {
         return applicableTimeslots;
+    }
+
+    public ClassroomAndTime getScheduledClassroomAndTime() {
+        return scheduledClassroomAndTime;
+    }
+
+    public void setScheduledClassroomAndTime(ClassroomAndTime scheduledClassroomAndTime) {
+        this.scheduledClassroomAndTime = scheduledClassroomAndTime;
     }
 }
