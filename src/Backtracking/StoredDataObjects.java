@@ -1,4 +1,6 @@
-package com.company;
+package Backtracking;
+
+import Data.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ public class StoredDataObjects {
     ArrayList<Lecturer_Blacklist> allLecturer_Blacklists;
     ArrayList<StudentGroup> allStudentGroups;
     ArrayList<StudentGroup_Blacklist> allStudentGroup_Blacklist;
+
     ArrayList<ClassroomAndTime> allClassroomAndTime;
 
     public StoredDataObjects() {
@@ -97,7 +100,7 @@ public class StoredDataObjects {
             for (int i = 1; i <= 5; i++) { //loop for weekdays
                 for (int j = 1; j <= 6; j++) { //each weekday has 6 TimeSlots
                     if (findClassroom_Blacklist.size() == 0) {
-                        availableClassRoomAndTimes.add(new ClassroomAndTime(classroom.getIdClassroom(), classroom.getCapacity(), i, j));
+                        availableClassRoomAndTimes.add(new ClassroomAndTime(classroom.getIdClassroom(), i, j));
                     } else {
                         checkIfSlotinBlacklist = false;
                         for (Classroom_Blacklist classroom_Blacklist : findClassroom_Blacklist) {
@@ -106,7 +109,7 @@ public class StoredDataObjects {
                             }
                         }
                         if (!checkIfSlotinBlacklist) {
-                            availableClassRoomAndTimes.add(new ClassroomAndTime(classroom.getIdClassroom(), classroom.getCapacity(), i, j));
+                            availableClassRoomAndTimes.add(new ClassroomAndTime(classroom.getIdClassroom(), i, j));
                         }
                     }
                 }
@@ -160,33 +163,7 @@ public class StoredDataObjects {
         }
     }
 
-    public void updateAvailableClassroomAndTimesForEachLecture(Lecture scheduledLec, ClassroomAndTime scheduledClassroomAndTime){
-
-        //Der Lehrer, der für scheduledClassroomAndTime verplant wurde, darf für den Timeslot nicht nochmal verplant werden. Gleiches gilt für die Studentengruppen
-        List<Lecture_has_StudentGroup> scheduledLecture_has_studentGroups = allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == scheduledLec.getIdLecture()).collect(Collectors.toList());
-        List<Lecture_has_StudentGroup> studentGroupsForLec;
-        for (Lecture lec:this.allLecturesToSchedule) {
-            //wenn ein anderes Fach den nun vergebenen Zeitslot in den möglichen Zeitslots hat, so wird dieser gelöscht (Da er schon vergeben ist).
-            if(lec.getApplicableTimeslots().contains(scheduledClassroomAndTime)){
-                lec.getApplicableTimeslots().remove(scheduledClassroomAndTime);
-            }
-            //Es werden sich alle Studentengruppen geholt, die das iterierende Fach lec hören. Gleicht einer Studentengruppe aus dem Fach lec einer Studentengruppe aus dem verplanten Fach, so werden die Zeitblöcke, die sich dem verplanten ClassroomAndTime leichen gelöscht. Hierdurch können die selben Studentengruppen nicht doppelt gebucht werden.
-            studentGroupsForLec =  allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == lec.getIdLecture()).collect(Collectors.toList());
-            for (Lecture_has_StudentGroup iterate1:studentGroupsForLec) {
-                for (Lecture_has_StudentGroup iterate2:scheduledLecture_has_studentGroups) {
-                    if(iterate1.getIdStudentGroup().equals(iterate2.getIdStudentGroup())){
-                        lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledClassroomAndTime.getIdDay() && classroomAndTime.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()));
-                    }
-                }
-            }
-            //Unterrichtet der Dozent aus dem scheduledLec auch andere Fächer, so wird er dort aus den Timeslots entfernt, der schon für scheduledLec gesetzt wurde.
-            if(lec.getIdLecturer() == scheduledLec.getIdLecturer()){
-               lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledClassroomAndTime.getIdDay() && classroomAndTime.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()));
-            }
-        }
-    }
-
-    private static boolean isValidFile(String fileName) {
+    private boolean isValidFile(String fileName) {
         if (fileName.equals("Classroom.txt") ||
                 fileName.equals("Classroom_Blacklist.txt") ||
                 fileName.equals("Lecture.txt") ||
