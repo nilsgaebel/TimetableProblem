@@ -11,9 +11,11 @@ public class Main {
         storedDataObjects.readDataObjects(args[0]);
 
         Backtracking backtracking = new Backtracking(new ArrayList<>(), storedDataObjects.allLecturesToSchedule,storedDataObjects.allLecture_has_StudentGroups);
-        backtracking.startBacktracking();
-        ArrayList<Lecture> result = backtracking.getResult();
 
+        boolean resultB = backtracking.startBacktracking(true);
+        System.out.println("Ergebnis Backtracking: " + resultB);
+        ArrayList<Lecture> result = backtracking.getResult();
+        
         for (Lecture lec: result) {
             System.out.println("ID LectureObject: " + lec.getIdLectureObject() + " Raum: " + lec.getScheduledClassroomAndTime().getIdClassroom() + " Tag: " + lec.getScheduledClassroomAndTime().getIdDay() + " Timeslot: "+lec.getScheduledClassroomAndTime().getIdTimeSlot() + " Lecturer: " + lec.getIdLecturer());
         }

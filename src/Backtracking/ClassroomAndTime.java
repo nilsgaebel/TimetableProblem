@@ -6,7 +6,17 @@ public class ClassroomAndTime {
     private int idDay;
     private int idTimeSlot;
 
+    private int indexLecObject;
+
     public ClassroomAndTime(int idClassroom, int idDay, int idTimeSlot) {
+        this.idClassroom = idClassroom;
+        this.idDay = idDay;
+        this.idTimeSlot = idTimeSlot;
+    }
+
+    //Konstruktor wird benutzt für die Zuordnung der gelöschten Zeitslots zum Lecture beim ForwardChecking
+    public ClassroomAndTime(int indexLecObject, int idClassroom, int idDay, int idTimeSlot) {
+        this.indexLecObject = indexLecObject;
         this.idClassroom = idClassroom;
         this.idDay = idDay;
         this.idTimeSlot = idTimeSlot;
@@ -31,5 +41,13 @@ public class ClassroomAndTime {
             return (this.getIdTimeSlot() == p.getIdTimeSlot() && this.getIdDay() == p.getIdDay() && this.getIdClassroom() == p.getIdClassroom());
         } else
             return false;
+    }
+
+    public int getIndexLecObject() {
+        return indexLecObject;
+    }
+
+    public void setIndexLecObject(int indexLecObject) {
+        this.indexLecObject = indexLecObject;
     }
 }

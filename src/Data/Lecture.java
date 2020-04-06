@@ -4,13 +4,14 @@ import Backtracking.ClassroomAndTime;
 
 import java.util.ArrayList;
 
-public class Lecture {
+public class Lecture implements Cloneable {
 
     private int idLectureObject;
     private int idLecture;
     private int idLecturer;
 
     private ArrayList<ClassroomAndTime> applicableTimeslots;
+    private ArrayList<ClassroomAndTime> deletedTimeslotsInFC = new ArrayList<>();
     private ClassroomAndTime scheduledClassroomAndTime;
 
     public Lecture(int idLectureObject, int idLecture, int idLecturer) {
@@ -46,4 +47,8 @@ public class Lecture {
     public void setScheduledClassroomAndTime(ClassroomAndTime scheduledClassroomAndTime) {
         this.scheduledClassroomAndTime = scheduledClassroomAndTime;
     }
+    public ArrayList<ClassroomAndTime> getDeletedTimeslotsInFC() {
+        return deletedTimeslotsInFC;
+    }
+
 }

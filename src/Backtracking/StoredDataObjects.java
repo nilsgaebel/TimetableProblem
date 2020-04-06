@@ -1,7 +1,6 @@
 package Backtracking;
 
 import Data.*;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,7 @@ public class StoredDataObjects {
                 try {
                     BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileEntry.getPath()), "UTF-16"));
                     String line = br.readLine(); //skip line with header;
-                    String[] lineSplit; //mit File.readAllLines evtl. besser
+                    String[] lineSplit;
                     while ((line = br.readLine()) != null && line.length() > 0) {
                         lineSplit = line.split("\t");
                         switch (fileEntry.getName()) {

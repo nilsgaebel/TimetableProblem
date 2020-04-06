@@ -2,7 +2,6 @@ package Backtracking;
 
 import Data.Lecture;
 import Data.Lecture_has_StudentGroup;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 public class Backtracking {
 
     private ArrayList<Lecture_has_StudentGroup> allLecture_has_StudentGroups;
-
     private ArrayList<Lecture> scheduledLectures;
     private ArrayList<Lecture> lecturesToSchedule;
 
@@ -28,57 +26,65 @@ public class Backtracking {
         return result;
     }
 
-    //Wahlmöglichkeit noch einbauen, ob mit oder ohne ForwardChecking!
-    public boolean startBacktracking() {
+    //forwardCheck == true -> with forwardCheck; false -> only backtracking
+    public boolean startBacktracking(boolean forwardCheck){
         if (lecturesToSchedule.size() < 1) {
             System.out.println("No lectures to schedule!");
             return false;
         } else {
             long timeStart = System.currentTimeMillis();
-            boolean result = backtracking(this.scheduledLectures, this.lecturesToSchedule, 1);
+            boolean result = backtracking(this.scheduledLectures, this.lecturesToSchedule, 1, forwardCheck);
             long timeEnd = System.currentTimeMillis();
-            System.out.println("Zeit Backtracking: " + (timeEnd-timeStart) + " Millisek.");
+            System.out.println("Zeit Backtracking: " + (timeEnd - timeStart) + " Millisek.");
             return result;
         }
     }
 
-    private boolean backtracking(ArrayList<Lecture> scheduledLectures, ArrayList<Lecture> lecturesToSchedule, int depth) {
+    private boolean backtracking(ArrayList<Lecture> scheduledLectures, ArrayList<Lecture> lecturesToSchedule, int depth, boolean forwardCheck) {
 
         ArrayList<Lecture> scheduledLecturesNextDepth;
-        ArrayList<Lecture> lecturesToScheduleNextDepth;
+        ArrayList<Lecture> lecturesToScheduleNextDepth = null;
+        List<ClassroomAndTime> deletedTimeslotsInCurrentDepth = null;
+
+        boolean result;
+        System.out.println("Rekursionsebene: " + depth);
 
         if (lecturesToSchedule.size() < 1) {
-            return true;
+            result = true;
         } else {
             Lecture currentLectureToSchedule = selectNextLecture(lecturesToSchedule);
             ArrayList<ClassroomAndTime> possibleDomain = currentLectureToSchedule.getApplicableTimeslots();
+            result = false;
+
             for (ClassroomAndTime classroomAndTime : possibleDomain) {
                 if (checkConsistency(scheduledLectures, currentLectureToSchedule, classroomAndTime)) {
 
-                    currentLectureToSchedule.setScheduledClassroomAndTime(classroomAndTime);
-
                     scheduledLecturesNextDepth = new ArrayList<>(scheduledLectures);
+                    currentLectureToSchedule.setScheduledClassroomAndTime(classroomAndTime);
                     scheduledLecturesNextDepth.add(currentLectureToSchedule);
 
                     lecturesToScheduleNextDepth = new ArrayList<>(lecturesToSchedule);
                     lecturesToScheduleNextDepth.remove(currentLectureToSchedule);
 
-                    //ForwardChecking
-                    lecturesToScheduleNextDepth = removeConflicts(lecturesToScheduleNextDepth, currentLectureToSchedule);
-
+                    if(forwardCheck){
+                        removeConflicts(lecturesToScheduleNextDepth, currentLectureToSchedule);
+                        deletedTimeslotsInCurrentDepth = getAllDeletedTimeslots(lecturesToScheduleNextDepth);
+                    }
                     if (lecturesToScheduleNextDepth.size() < 1) {
                         this.result = scheduledLecturesNextDepth;
+                        result = true;
                     } else {
-                        backtracking(scheduledLecturesNextDepth, lecturesToScheduleNextDepth, depth + 1);
+                        result = backtracking(scheduledLecturesNextDepth, lecturesToScheduleNextDepth, depth + 1, forwardCheck);
                     }
                 }
-                if (this.result.size() > 0) {
-                    System.out.println("Tiefe: " + depth);
-                    return true;
+                if (result == true) {
+                    break;
+                } if(forwardCheck) {
+                    restoreTimeslotsAfterForwardCheck(lecturesToScheduleNextDepth, currentLectureToSchedule, deletedTimeslotsInCurrentDepth);
                 }
             }
         }
-        return false;
+        return result;
     }
 
     private Lecture selectNextLecture(ArrayList<Lecture> lectures) {
@@ -124,36 +130,83 @@ public class Backtracking {
         return true;
     }
 
-    private ArrayList<Lecture> removeConflicts(ArrayList<Lecture> lecturesToScheduleNextDepth, Lecture scheduledLecture) {
+    private void removeConflicts(ArrayList<Lecture> lecturesToScheduleNextDepth, Lecture scheduledLecture) {
 
         List<Lecture_has_StudentGroup> scheduledLecture_has_studentGroups = this.allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == scheduledLecture.getIdLecture()).collect(Collectors.toList());
+        ClassroomAndTime scheduledClassroomAndTime = scheduledLecture.getScheduledClassroomAndTime();
+
         List<Lecture_has_StudentGroup> studentGroupsForLec;
 
-        //Besitzt ein noch zu planendes Fach den zugewiesenen Zeitslot von scheduledLecture noch in den möglichen Timeslots, so wird dieser gelöscht (da bereits scheduledLecture zugewiesen).
         for (Lecture lec : lecturesToScheduleNextDepth) {
-            if (lec.getApplicableTimeslots().contains(scheduledLecture.getScheduledClassroomAndTime())) {
-                lec.getApplicableTimeslots().remove(scheduledLecture.getScheduledClassroomAndTime());
-            }
-
-            //Die Studentengruppen aus dem iterierenden Fach lec werden mit den Studentengruppen aus scheduledLecture verglichen...
-            //Gleicht einer Studentengruppe aus dem Fach lec einer Studentengruppe aus dem verplanten scheduledLecture, so werden die zugewiesenen Zeitblöcke aus scheduledLec in den möglichen Zeitslots für lec entfernt...
-            //Hierdurch kann eine Studentengruppe für einen gebuchten Zeitslot nicht nochmal gebucht werden.
+            lec.getDeletedTimeslotsInFC().clear();
+            ArrayList<ClassroomAndTime> possibleSlots = new ArrayList<ClassroomAndTime>(lec.getApplicableTimeslots());
             studentGroupsForLec = allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == lec.getIdLecture()).collect(Collectors.toList());
-            for (Lecture_has_StudentGroup iterate1 : studentGroupsForLec) {
-                for (Lecture_has_StudentGroup iterate2 : scheduledLecture_has_studentGroups) {
-                    if (iterate1.getIdStudentGroup().equals(iterate2.getIdStudentGroup())) {
-                        lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledLecture.getScheduledClassroomAndTime().getIdDay() &&
-                                classroomAndTime.getIdTimeSlot() == scheduledLecture.getScheduledClassroomAndTime().getIdTimeSlot()));
+
+            //Besitzt ein noch zu planendes Fach den zugewiesenen Zeitslot von scheduledLecture noch in den möglichen Timeslots, so wird dieser gelöscht (da bereits scheduledLecture zugewiesen).
+            for (ClassroomAndTime slot : possibleSlots) {
+                if (slot.equals(scheduledClassroomAndTime)) {
+                    lec.getApplicableTimeslots().remove(slot);
+                    if (!(lec.getDeletedTimeslotsInFC().contains(slot))) {
+                        lec.getDeletedTimeslotsInFC().add(slot);
+                    }
+                }
+                //Unterrichtet der Dozent aus scheduledLecture auch andere Fächer, so wird er dort aus den Timeslots entfernt, da der Dozent schon für scheduledLec verplant ist.
+                if (lec.getIdLecturer() == scheduledLecture.getIdLecturer()) {
+                    if (slot.getIdDay() == scheduledClassroomAndTime.getIdDay() && slot.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()) {
+                        lec.getApplicableTimeslots().remove(slot);
+                        if (!(lec.getDeletedTimeslotsInFC().contains(slot))) {
+                            lec.getDeletedTimeslotsInFC().add(slot);
+                        }
+                    }
+                }
+                for (Lecture_has_StudentGroup iterate1 : studentGroupsForLec) {
+                    for (Lecture_has_StudentGroup iterate2 : scheduledLecture_has_studentGroups) {
+                        if (iterate1.getIdStudentGroup().equals(iterate2.getIdStudentGroup()) &&
+                                slot.getIdDay() == scheduledClassroomAndTime.getIdDay() && slot.getIdTimeSlot() == scheduledClassroomAndTime.getIdTimeSlot()) {
+                            lec.getApplicableTimeslots().remove(slot);
+                            if (!(lec.getDeletedTimeslotsInFC().contains(slot))) {
+                                lec.getDeletedTimeslotsInFC().add(slot);
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
 
-            //Unterrichtet der Dozent aus scheduledLecture auch andere Fächer, so wird er dort aus den Timeslots entfernt, da der Dozent schon für scheduledLec verplant ist.
-            if (lec.getIdLecturer() == scheduledLecture.getIdLecturer()) {
-                lec.getApplicableTimeslots().removeIf(classroomAndTime -> (classroomAndTime.getIdDay() == scheduledLecture.getScheduledClassroomAndTime().getIdDay() &&
-                        classroomAndTime.getIdTimeSlot() == scheduledLecture.getScheduledClassroomAndTime().getIdTimeSlot()));
+    private ArrayList<ClassroomAndTime> getAllDeletedTimeslots(ArrayList<Lecture> lectures) {
+        ArrayList<ClassroomAndTime> allTimeslots = new ArrayList<ClassroomAndTime>();
+        for (Lecture lec : lectures) {
+            int index = lec.getIdLectureObject();
+            for (ClassroomAndTime slot : lec.getDeletedTimeslotsInFC()) {
+                allTimeslots.add(new ClassroomAndTime(index, slot.getIdClassroom(), slot.getIdDay(), slot.getIdTimeSlot()));
             }
         }
-        return lecturesToScheduleNextDepth;
+        return allTimeslots;
+    }
+
+    private void restoreTimeslotsAfterForwardCheck(ArrayList<Lecture> lectures, Lecture currentLec, List<ClassroomAndTime> deleted) {
+        currentLec.getDeletedTimeslotsInFC().clear();
+        currentLec.setScheduledClassroomAndTime(null);
+        for (Lecture l : lectures) {
+            for (ClassroomAndTime slot : deleted) {
+                if (l.getIdLectureObject() == slot.getIndexLecObject()) {
+                    l.getApplicableTimeslots().add(slot);
+                }
+            }
+        }
+        lectures.add(currentLec);
+    }
+
+    //Method for Debugging
+    private ArrayList<ClassroomAndTime> getAllTimeslots(ArrayList<Lecture> lectures) {
+        ArrayList<ClassroomAndTime> allTimeslots = new ArrayList<ClassroomAndTime>();
+        for (Lecture lec : lectures) {
+            for (ClassroomAndTime slot : lec.getApplicableTimeslots()) {
+                slot.setIndexLecObject(lec.getIdLectureObject());
+                allTimeslots.add(slot);
+            }
+        }
+        return allTimeslots;
     }
 }
