@@ -4,7 +4,7 @@ import Backtracking.ClassroomAndTime;
 
 import java.util.ArrayList;
 
-public class Lecture implements Cloneable {
+public class Lecture{
 
     private int idLectureObject;
     private int idLecture;
