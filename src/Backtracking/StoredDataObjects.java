@@ -10,9 +10,9 @@ public class StoredDataObjects {
 
     ArrayList<Classroom> allClassrooms;
     ArrayList<Classroom_Blacklist> allClassroom_Blacklists;
-    ArrayList<Lecture> allLecturesToSchedule;
-    ArrayList<Lecture_has_StudentGroup> allLecture_has_StudentGroups;
-    ArrayList<Lecturer> allLecturers;
+    public ArrayList<Lecture> allLecturesToSchedule;
+    public ArrayList<Lecture_has_StudentGroup> allLecture_has_StudentGroups;
+    public ArrayList<Lecturer> allLecturers;
     ArrayList<Lecturer_Blacklist> allLecturer_Blacklists;
     ArrayList<StudentGroup> allStudentGroups;
     ArrayList<StudentGroup_Blacklist> allStudentGroup_Blacklist;

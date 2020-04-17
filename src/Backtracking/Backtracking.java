@@ -2,6 +2,9 @@ package Backtracking;
 
 import Data.Lecture;
 import Data.Lecture_has_StudentGroup;
+
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -13,6 +16,9 @@ public class Backtracking {
     private ArrayList<Lecture> lecturesToSchedule;
 
     private ArrayList<Lecture> result;
+    public ArrayList<Lecture> getResult() {
+        return result;
+    }
 
     public Backtracking(ArrayList<Lecture> scheduledLectures, ArrayList<Lecture> lecturesToSchedule, ArrayList<Lecture_has_StudentGroup> allLecture_has_StudentGroups) {
         this.scheduledLectures = scheduledLectures;
@@ -20,10 +26,6 @@ public class Backtracking {
         this.allLecture_has_StudentGroups = allLecture_has_StudentGroups;
 
         result = new ArrayList<>();
-    }
-
-    public ArrayList<Lecture> getResult() {
-        return result;
     }
 
     //forwardCheck == true -> with forwardCheck; false -> only backtracking
@@ -35,13 +37,35 @@ public class Backtracking {
             long timeStart = System.currentTimeMillis();
             boolean result = backtracking(this.scheduledLectures, this.lecturesToSchedule, 1, forwardCheck);
             long timeEnd = System.currentTimeMillis();
-            System.out.println("Zeit Backtracking: " + (timeEnd - timeStart) + " Millisek.");
+            //System.out.println("Zeit Backtracking: " + (timeEnd - timeStart) + " Millisek.");
             return result;
         }
     }
 
-    private boolean backtracking(ArrayList<Lecture> scheduledLectures, ArrayList<Lecture> lecturesToSchedule, int depth, boolean forwardCheck) {
+    public void writeResultsToCSV() throws IOException {
+        if (this.result.size() < 1) {
+            System.out.println("No results to create a .csv-File!");
+        } else {
+            FileWriter csvWriter = new FileWriter("result.csv");
+            csvWriter.append("idRaum" + ";");
+            csvWriter.append("idDay" + ";");
+            csvWriter.append("idTimeSlot" + ";");
+            csvWriter.append("idPlanObjectLecture" + "\n");
 
+            for (Lecture lec:this.result) {
+                csvWriter.append(lec.getScheduledClassroomAndTime().getIdClassroom() + ";");
+                csvWriter.append(lec.getScheduledClassroomAndTime().getIdDay() + ";");
+                csvWriter.append(lec.getScheduledClassroomAndTime().getIdTimeSlot() +";");
+                csvWriter.append(lec.getIdLectureObject() + "\n");
+            }
+            System.out.println("Die Ergebnisse befinden sich in result.csv im Ausführungsverzeichnis");
+            csvWriter.flush();
+            csvWriter.close();
+        }
+    }
+
+    private boolean backtracking(ArrayList<Lecture> scheduledLectures, ArrayList<Lecture> lecturesToSchedule, int depth, boolean forwardCheck) {
+        List<ClassroomAndTime> all = getAllTimeslots(lecturesToSchedule);
         ArrayList<Lecture> scheduledLecturesNextDepth;
         ArrayList<Lecture> lecturesToScheduleNextDepth = null;
         List<ClassroomAndTime> deletedTimeslotsInCurrentDepth = null;
@@ -80,6 +104,7 @@ public class Backtracking {
                 if (result == true) {
                     break;
                 } if(forwardCheck) {
+                    //Beim Zurückspringen und fehlender Ergebnisfindung werden die Timeslots für die aktuelle Ebene wieder hergestellt
                     restoreTimeslotsAfterForwardCheck(lecturesToScheduleNextDepth, currentLectureToSchedule, deletedTimeslotsInCurrentDepth);
                 }
             }
@@ -142,7 +167,7 @@ public class Backtracking {
             ArrayList<ClassroomAndTime> possibleSlots = new ArrayList<ClassroomAndTime>(lec.getApplicableTimeslots());
             studentGroupsForLec = allLecture_has_StudentGroups.stream().filter(id -> id.getIdLecture() == lec.getIdLecture()).collect(Collectors.toList());
 
-            //Besitzt ein noch zu planendes Fach den zugewiesenen Zeitslot von scheduledLecture noch in den möglichen Timeslots, so wird dieser gelöscht (da bereits scheduledLecture zugewiesen).
+            //Besitzt ein noch zu planendes Fach den zugewiesenen Zeitslot von scheduledLecture in den möglichen Timeslots, so wird dieser gelöscht (da bereits scheduledLecture zugewiesen).
             for (ClassroomAndTime slot : possibleSlots) {
                 if (slot.equals(scheduledClassroomAndTime)) {
                     lec.getApplicableTimeslots().remove(slot);
